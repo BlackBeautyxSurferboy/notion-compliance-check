@@ -139,10 +139,18 @@ For Claude Desktop, add to `claude_desktop_config.json`:
 
 ### 5. Run as webhook (for the Notion Button demo)
 
+**Option A — One-click deploy (recommended for the live demo):**
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/BlackBeautyxSurferboy/notion-compliance-check)
+
+Click → connect GitHub → set the three env vars (`NOTION_TOKEN`, `NCC_REPORT_PARENT_PAGE_ID`, `NCC_WEBHOOK_SECRET`) → wait ~3 min → permanent public URL. No tunnel, no terminal, no babysitting.
+
+**Option B — Local with a public tunnel:**
+
 ```bash
 ncc-webhook                  # listens on :8000
-# expose with ngrok / cloudflared for the Notion Button to reach it:
-ngrok http 8000
+# expose with cloudflared (no account needed) or ngrok:
+cloudflared tunnel --url http://localhost:8000
 ```
 
 In Notion: add a Button block → action `Send webhook` → URL = your public webhook URL → JSON body:

@@ -1,0 +1,36 @@
+# One-click deploy to Render.com
+#
+# Usage:
+#   1. Visit https://render.com/deploy?repo=https://github.com/BlackBeautyxSurferboy/notion-compliance-check
+#   2. Connect your GitHub account, pick this repo, click "Apply"
+#   3. Set the three required env vars when prompted:
+#        - NOTION_TOKEN              (from your Notion integration)
+#        - NCC_REPORT_PARENT_PAGE_ID (32-char hex from the page URL)
+#        - NCC_WEBHOOK_SECRET        (any long random string)
+#   4. After ~3 minutes you get a permanent URL like
+#        https://notion-compliance-check.onrender.com
+#      Use that + /webhook/run-audit as the Notion Button webhook target.
+#
+# Free tier note: the service idles after 15 min of no traffic and takes
+# ~30 seconds to wake on the first request. Click the button once before
+# your live demo to warm it up.
+
+services:
+  - type: web
+    name: notion-compliance-check
+    runtime: python
+    plan: free
+    buildCommand: pip install -e .
+    startCommand: ncc-webhook
+    healthCheckPath: /health
+    envVars:
+      - key: NOTION_TOKEN
+        sync: false   # prompt user at deploy time
+      - key: NCC_REPORT_PARENT_PAGE_ID
+        sync: false
+      - key: NCC_WEBHOOK_SECRET
+        sync: false
+      - key: NCC_WEBHOOK_PORT
+        value: "10000"  # Render's default web service port
+      - key: NCC_STALE_THRESHOLD_DAYS
+        value: "365"

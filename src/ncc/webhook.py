@@ -91,7 +91,13 @@ async def trigger_audit(request: Request, background: BackgroundTasks) -> dict[s
 def run() -> None:
     import uvicorn
 
-    port = int(os.environ.get("NCC_WEBHOOK_PORT", "8000"))
+    # Hosting platforms (Render, Fly, Heroku, Cloud Run, …) inject PORT.
+    # Fall back to NCC_WEBHOOK_PORT for local development, then 8000.
+    port = int(
+        os.environ.get("PORT")
+        or os.environ.get("NCC_WEBHOOK_PORT")
+        or "8000"
+    )
     uvicorn.run(app, host="0.0.0.0", port=port)
 
 
