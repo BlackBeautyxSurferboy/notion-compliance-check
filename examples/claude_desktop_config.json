@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "notion-compliance-check": {
+      "command": "/absolute/path/to/notion-compliance-check/.venv/bin/ncc-mcp",
+      "env": {
+        "NOTION_TOKEN": "secret_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        "NCC_REPORT_PARENT_PAGE_ID": "1f23456789abcdef0123456789abcdef"
+      }
+    }
+  }
+}
