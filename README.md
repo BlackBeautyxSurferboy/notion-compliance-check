@@ -2,7 +2,7 @@
 
 > An MCP server that audits a Notion workspace for IT and company compliance risks — DSGVO, ISO 27001, SOC 2, PCI-DSS — and writes the report straight back into Notion as a formatted page.
 
-NCC is not a SaaS layer on top of Notion. It is built on the same primitives Notion's own platform team is investing in: **MCP (Model Context Protocol)** and the **public Notion API with native webhook actions**. That choice is deliberate — see [Architecture](#architecture) below.
+NCC is not a SaaS layer on top of Notion. It is built on the same primitives Notion's own platform team is investing in: **MCP (Model Context Protocol)** and the **public Notion API with native webhook actions**. That choice is deliberate — see [Architecture](#architecture) below, or read [docs/build-process.md](docs/build-process.md) for the full decision journey.
 
 ---
 
