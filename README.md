@@ -97,7 +97,7 @@ So: MCP server for the *agent-driven* path, FastAPI webhook for the *button-clic
 ### 2. Local install
 
 ```bash
-git clone https://github.com/<you>/notion-compliance-check.git
+git clone https://github.com/BlackBeautyxSurferboy/notion-compliance-check.git
 cd notion-compliance-check
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"

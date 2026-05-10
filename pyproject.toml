@@ -43,8 +43,8 @@ ncc-mcp = "ncc.server:run"
 ncc-webhook = "ncc.webhook:run"
 
 [project.urls]
-Homepage = "https://github.com/alexreinbach/notion-compliance-check"
-Issues = "https://github.com/alexreinbach/notion-compliance-check/issues"
+Homepage = "https://github.com/BlackBeautyxSurferboy/notion-compliance-check"
+Issues = "https://github.com/BlackBeautyxSurferboy/notion-compliance-check/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ncc"]
