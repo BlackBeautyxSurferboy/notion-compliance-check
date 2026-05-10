@@ -39,6 +39,21 @@ def test_score_floors_at_zero() -> None:
     assert audit.score == 0
 
 
+def test_score_is_none_when_any_check_errored() -> None:
+    """Regression: a Notion 401 used to produce score=100 because errors
+    were not subtracted. Now an incomplete audit returns None."""
+    now = datetime.now(UTC)
+    audit = AuditResult(
+        started_at=now,
+        finished_at=now,
+        findings=[],
+        errors={"public_access": "401 unauthorized"},
+    )
+    assert audit.score is None
+    assert audit.is_complete is False
+    assert "N/A" in audit.summary_line()
+
+
 def test_grouping_by_severity() -> None:
     now = datetime.now(UTC)
     findings = [

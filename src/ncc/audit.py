@@ -48,15 +48,32 @@ class AuditResult:
         return out
 
     @property
-    def score(self) -> int:
-        """0–100 compliance score. 100 means clean, 0 means critical findings dominate."""
+    def is_complete(self) -> bool:
+        """True when every check ran cleanly. False when any check raised."""
+        return not self.errors
+
+    @property
+    def score(self) -> int | None:
+        """0–100 compliance score, or None if the audit was incomplete.
+
+        Returning None for incomplete audits is deliberate: a failed API call
+        produces zero findings, which would otherwise be indistinguishable from
+        a clean workspace and inflate the score to a misleading 100.
+        """
+        if not self.is_complete:
+            return None
         penalty = sum(_SEVERITY_WEIGHT[f.severity] for f in self.findings)
         return max(0, 100 - min(penalty, 100))
 
     def summary_line(self) -> str:
         counts = {s: len(self.by_severity[s]) for s in Severity}
+        score_text = (
+            f"Score {self.score}/100"
+            if self.score is not None
+            else f"Score N/A — {len(self.errors)} check(s) failed"
+        )
         return (
-            f"Score {self.score}/100 — "
+            f"{score_text} — "
             f"{counts[Severity.CRITICAL]} critical, "
             f"{counts[Severity.HIGH]} high, "
             f"{counts[Severity.MEDIUM]} medium, "

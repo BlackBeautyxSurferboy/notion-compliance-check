@@ -32,7 +32,7 @@ from ncc.checks import (
 from ncc.notion_client import NotionClient
 from ncc.report import write_report
 
-load_dotenv()
+load_dotenv(override=True)
 console = Console()
 
 _SEVERITY_COLOR = {
@@ -53,9 +53,16 @@ _CHECK_BY_ID = {
 
 def _print_result(result: AuditResult) -> None:
     score = result.score
-    score_style = "bold green" if score >= 90 else "bold yellow" if score >= 70 else "bold red"
+    if score is None:
+        score_style, score_text = "bold red", "N/A"
+    elif score >= 90:
+        score_style, score_text = "bold green", f"{score}/100"
+    elif score >= 70:
+        score_style, score_text = "bold yellow", f"{score}/100"
+    else:
+        score_style, score_text = "bold red", f"{score}/100"
     console.print(Panel.fit(
-        f"[{score_style}]{score}/100[/] — {result.summary_line()}",
+        f"[{score_style}]{score_text}[/] — {result.summary_line()}",
         title="Notion Compliance Check",
     ))
 

@@ -36,7 +36,7 @@ from ncc.checks import (
 from ncc.notion_client import NotionClient
 from ncc.report import write_report
 
-load_dotenv()
+load_dotenv(override=True)
 
 mcp = FastMCP("Notion Compliance Check")
 

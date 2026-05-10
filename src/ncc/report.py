@@ -101,12 +101,16 @@ def build_report_blocks(result: AuditResult) -> list[dict[str, Any]]:
     """Return the full block list for a compliance report page."""
     blocks: list[dict[str, Any]] = []
 
-    score_severity = (
-        Severity.CRITICAL if result.score < 40
-        else Severity.HIGH if result.score < 70
-        else Severity.MEDIUM if result.score < 90
-        else Severity.INFO
-    )
+    if result.score is None:
+        score_severity = Severity.HIGH  # incomplete audit — flag visibly
+    elif result.score < 40:
+        score_severity = Severity.CRITICAL
+    elif result.score < 70:
+        score_severity = Severity.HIGH
+    elif result.score < 90:
+        score_severity = Severity.MEDIUM
+    else:
+        score_severity = Severity.INFO
     blocks.append(_callout(result.summary_line(), score_severity, icon="📊"))
     blocks.append(_paragraph([_rich_text(
         f"Generated at {result.finished_at.isoformat(timespec='seconds')} "
@@ -165,7 +169,8 @@ async def write_report(
     result: AuditResult,
 ) -> dict[str, Any]:
     """Create a new Notion page under `parent_page_id` containing the full report."""
-    title = f"Compliance Audit — {result.finished_at.date().isoformat()} ({result.score}/100)"
+    score_str = f"{result.score}/100" if result.score is not None else "N/A"
+    title = f"Compliance Audit — {result.finished_at.date().isoformat()} ({score_str})"
     body = {
         "parent": {"page_id": parent_page_id},
         "properties": {

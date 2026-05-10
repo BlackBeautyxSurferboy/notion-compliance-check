@@ -20,7 +20,7 @@ from ncc.audit import run_audit
 from ncc.notion_client import NotionClient
 from ncc.report import write_report
 
-load_dotenv()
+load_dotenv(override=True)
 
 app = FastAPI(
     title="Notion Compliance Check Webhook",
