@@ -8,7 +8,6 @@ and we reject anything else with a 401.
 
 from __future__ import annotations
 
-import asyncio
 import hmac
 import os
 from typing import Any
@@ -121,7 +120,10 @@ async def trigger_audit(request: Request, background: BackgroundTasks) -> dict[s
         )
 
     # Notion's webhook caller times out fast, so run the audit in the background.
-    background.add_task(asyncio.create_task, _run_and_post(parent_page_id))
+    # FastAPI's BackgroundTasks handles async callables directly — wrapping
+    # in asyncio.create_task here would create a task that gets garbage-collected
+    # before it runs, silently swallowing the audit.
+    background.add_task(_run_and_post, parent_page_id)
     return {"status": "accepted", "message": "Audit started; report will be posted to Notion."}
 
 
