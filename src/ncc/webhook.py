@@ -39,13 +39,39 @@ def _require_env(key: str) -> str:
     return value
 
 
-def _check_secret(body: dict[str, Any]) -> None:
+def _check_secret(request: Request, body: dict[str, Any]) -> None:
+    """Validate the shared secret.
+
+    Notion Buttons can send custom headers but not a JSON body, while other
+    callers (CLI tests, MCP wrappers) post the secret in the body. We accept
+    either, in this precedence order:
+        1. X-NCC-Secret header  (Notion Button friendly)
+        2. Authorization: Bearer <secret>  (curl / generic webhooks)
+        3. secret field in JSON body  (legacy / CLI tests)
+    """
     expected = os.environ.get("NCC_WEBHOOK_SECRET")
     if not expected:
         return  # no secret configured = open endpoint (dev only)
-    provided = str(body.get("secret", ""))
-    if not hmac.compare_digest(provided, expected):
-        raise HTTPException(status_code=401, detail="Invalid or missing secret.")
+
+    candidates: list[str] = []
+
+    header = request.headers.get("x-ncc-secret")
+    if header:
+        candidates.append(header)
+
+    auth = request.headers.get("authorization", "")
+    if auth.lower().startswith("bearer "):
+        candidates.append(auth[7:].strip())
+
+    body_secret = body.get("secret")
+    if body_secret:
+        candidates.append(str(body_secret))
+
+    for candidate in candidates:
+        if hmac.compare_digest(candidate, expected):
+            return
+
+    raise HTTPException(status_code=401, detail="Invalid or missing secret.")
 
 
 async def _run_and_post(parent_page_id: str) -> None:
@@ -79,7 +105,7 @@ async def trigger_audit(request: Request, background: BackgroundTasks) -> dict[s
     if not isinstance(body, dict):
         body = {}
 
-    _check_secret(body)
+    _check_secret(request, body)
 
     parent_page_id = (
         body.get("parent_page_id")
