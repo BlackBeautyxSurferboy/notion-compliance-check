@@ -114,6 +114,29 @@ class NotionClient:
     async def retrieve_database(self, database_id: str) -> dict[str, Any]:
         return await self._request("GET", f"/databases/{database_id}")
 
+    async def query_database_recent(
+        self,
+        database_id: str,
+        *,
+        limit: int = 5,
+        sort_property: str = "Datum",
+        sort_direction: str = "descending",
+    ) -> list[dict[str, Any]]:
+        """Fetch the most recent `limit` rows from a database.
+
+        Used by the widget to render the score gauge (latest run) and the
+        history timeline (recent runs). Limits page size so the iframe loads
+        fast even on workspaces with hundreds of audits.
+        """
+        body: dict[str, Any] = {
+            "page_size": max(1, min(limit, 100)),
+            "sorts": [{"property": sort_property, "direction": sort_direction}],
+        }
+        data = await self._request(
+            "POST", f"/databases/{database_id}/query", json=body
+        )
+        return data.get("results", [])
+
     async def create_page(self, body: dict[str, Any]) -> dict[str, Any]:
         return await self._request("POST", "/pages", json=body)
 

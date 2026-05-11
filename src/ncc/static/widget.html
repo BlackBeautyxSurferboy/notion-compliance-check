@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NCC Compliance Widget</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-subtle: #f7f6f3;
+    --border: #e9e9e7;
+    --text: #37352f;
+    --text-muted: #787774;
+    --accent: #2383e2;
+    --accent-hover: #1a6dbf;
+    --critical: #e03e3e;
+    --high: #d9730d;
+    --medium: #dfab01;
+    --low: #0b6e99;
+    --clean: #0f7b6c;
+    --gauge-bg: #ebebea;
+    --shadow: 0 1px 3px rgba(15, 15, 15, 0.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #191919;
+      --bg-subtle: #202020;
+      --border: #2f2f2f;
+      --text: #e7e7e5;
+      --text-muted: #9b9b97;
+      --gauge-bg: #2a2a2a;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue",
+                 "Inter", "Noto Sans", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 14px;
+    line-height: 1.5;
+    height: 100%;
+  }
+  .widget {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 20px 24px 16px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  header .logo {
+    font-size: 18px;
+    line-height: 1;
+  }
+  header h1 {
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  header .version {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* Score section */
+  .score-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 20px 0;
+  }
+  .gauge {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    flex-shrink: 0;
+  }
+  .gauge svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+  }
+  .gauge-bg {
+    fill: none;
+    stroke: var(--gauge-bg);
+    stroke-width: 10;
+  }
+  .gauge-arc {
+    fill: none;
+    stroke: var(--clean);
+    stroke-width: 10;
+    stroke-linecap: round;
+    transition: stroke-dasharray 600ms cubic-bezier(0.2, 0.8, 0.2, 1),
+                stroke 300ms ease;
+  }
+  .gauge-value {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+  }
+  .gauge-value .num {
+    font-size: 24px;
+    line-height: 1;
+  }
+  .gauge-value .max {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 2px;
+  }
+
+  .score-detail h2 {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 4px;
+  }
+  .score-detail .headline {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .severity-bar {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .pill {
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .pill.critical { color: var(--critical); }
+  .pill.high { color: var(--high); }
+  .pill.medium { color: var(--medium); }
+  .pill.low { color: var(--low); }
+  .pill .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* Action button */
+  .action {
+    margin: 16px 0;
+  }
+  button#run-btn {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border);
+    background: var(--accent);
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 150ms ease, opacity 150ms ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  button#run-btn:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+  button#run-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  button#run-btn.readonly {
+    background: var(--bg-subtle);
+    color: var(--text-muted);
+    border: 1px dashed var(--border);
+    cursor: not-allowed;
+  }
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 700ms linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  #status-line {
+    margin-top: 8px;
+    font-size: 12px;
+    color: var(--text-muted);
+    text-align: center;
+    min-height: 16px;
+  }
+  #status-line.error { color: var(--critical); }
+  #status-line.success { color: var(--clean); }
+
+  /* History */
+  .history-section h2 {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin: 16px 0 8px;
+  }
+  .history-row {
+    display: grid;
+    grid-template-columns: 80px 1fr auto;
+    gap: 12px;
+    align-items: center;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .history-row:last-child {
+    border-bottom: none;
+  }
+  .history-row .when {
+    color: var(--text-muted);
+    font-variant-numeric: tabular-nums;
+  }
+  .history-bar {
+    height: 6px;
+    background: var(--gauge-bg);
+    border-radius: 3px;
+    overflow: hidden;
+    position: relative;
+  }
+  .history-bar .fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--clean);
+    transition: width 300ms ease, background 300ms ease;
+  }
+  .history-row .score-label {
+    font-variant-numeric: tabular-nums;
+    font-weight: 500;
+    min-width: 48px;
+    text-align: right;
+  }
+  .history-row.link { cursor: pointer; }
+  .history-row.link:hover .when {
+    color: var(--accent);
+  }
+
+  /* Empty state */
+  .empty {
+    padding: 24px 0;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 13px;
+  }
+
+  /* Footer */
+  footer {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--text-muted);
+    text-align: center;
+  }
+  footer a {
+    color: var(--text-muted);
+    text-decoration: none;
+  }
+  footer a:hover {
+    color: var(--accent);
+    text-decoration: underline;
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div class="widget">
+
+  <header>
+    <span class="logo">🛡</span>
+    <h1>NCC Compliance</h1>
+    <span class="version">v0.2</span>
+  </header>
+
+  <section class="score-section">
+    <div class="gauge">
+      <svg viewBox="0 0 120 120">
+        <circle class="gauge-bg" cx="60" cy="60" r="50"></circle>
+        <circle class="gauge-arc" id="gauge-arc" cx="60" cy="60" r="50"
+                stroke-dasharray="0 314"></circle>
+      </svg>
+      <div class="gauge-value">
+        <div class="num" id="gauge-num">—</div>
+        <div class="max">/ 100</div>
+      </div>
+    </div>
+    <div class="score-detail">
+      <h2>Latest audit</h2>
+      <div class="headline" id="headline">Loading…</div>
+      <div class="severity-bar" id="severity-bar"></div>
+    </div>
+  </section>
+
+  <section class="action">
+    <button id="run-btn">
+      <span id="run-btn-label">Run Compliance Audit</span>
+    </button>
+    <div id="status-line"></div>
+  </section>
+
+  <section class="history-section">
+    <h2>Recent audits</h2>
+    <div id="history-list">
+      <div class="empty">No history yet.</div>
+    </div>
+  </section>
+
+  <footer>
+    Powered by <a href="https://github.com/BlackBeautyxSurferboy/notion-compliance-check"
+                  target="_blank" rel="noopener">NCC</a>
+    — deterministic Notion compliance auditing
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  const AUTH_KEY = "__AUTH_KEY__";
+  const CAN_TRIGGER = (("__CAN_TRIGGER__") === "true");
+
+  const $ = (id) => document.getElementById(id);
+  const runBtn = $("run-btn");
+  const runBtnLabel = $("run-btn-label");
+  const statusLine = $("status-line");
+  const headline = $("headline");
+  const severityBar = $("severity-bar");
+  const gaugeNum = $("gauge-num");
+  const gaugeArc = $("gauge-arc");
+  const historyList = $("history-list");
+
+  // Gauge geometry: r=50 -> circumference = 2*pi*r ≈ 314.16
+  const GAUGE_CIRC = 314.16;
+
+  function scoreColor(score) {
+    if (score === null || score === undefined) return "#787774";
+    if (score >= 90) return "#0f7b6c";   // clean
+    if (score >= 70) return "#dfab01";   // medium
+    if (score >= 40) return "#d9730d";   // high
+    return "#e03e3e";                    // critical
+  }
+
+  function renderGauge(score) {
+    const numeric = (score === null || score === undefined) ? 0 : Math.max(0, Math.min(100, score));
+    const filled = (numeric / 100) * GAUGE_CIRC;
+    gaugeArc.setAttribute("stroke-dasharray", filled + " " + GAUGE_CIRC);
+    gaugeArc.setAttribute("stroke", scoreColor(score));
+    gaugeNum.textContent = (score === null || score === undefined) ? "N/A" : String(score);
+  }
+
+  function renderSeverityBar(row) {
+    if (!row) {
+      severityBar.innerHTML = "";
+      return;
+    }
+    const pills = [
+      { label: row.critical || 0, cls: "critical", name: "critical" },
+      { label: row.high || 0, cls: "high", name: "high" },
+      { label: row.medium || 0, cls: "medium", name: "medium" },
+      { label: row.low || 0, cls: "low", name: "low" },
+    ];
+    severityBar.innerHTML = pills.map(p =>
+      `<span class="pill ${p.cls}"><span class="dot"></span>${p.label} ${p.name}</span>`
+    ).join("");
+  }
+
+  function renderHeadline(row) {
+    if (!row) {
+      headline.textContent = "No audits yet — click below.";
+      return;
+    }
+    const score = row.score === null ? "N/A" : (row.score + "/100");
+    const status = row.status || "—";
+    headline.textContent = `${score} · ${status}`;
+  }
+
+  function formatDate(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    const opts = { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" };
+    return d.toLocaleString(undefined, opts);
+  }
+
+  function renderHistory(rows) {
+    if (!rows || rows.length === 0) {
+      historyList.innerHTML = '<div class="empty">No history yet — run your first audit.</div>';
+      return;
+    }
+    historyList.innerHTML = rows.map(r => {
+      const score = (r.score === null || r.score === undefined) ? 0 : r.score;
+      const scoreLabel = (r.score === null || r.score === undefined) ? "N/A" : `${r.score}/100`;
+      const fillPct = Math.max(0, Math.min(100, score));
+      const color = scoreColor(r.score);
+      const onclick = r.report_url ? `window.open("${r.report_url}","_blank")` : "";
+      const linkClass = r.report_url ? "link" : "";
+      return `
+        <div class="history-row ${linkClass}" ${r.report_url ? `onclick='${onclick}'` : ""}>
+          <span class="when">${formatDate(r.date)}</span>
+          <span class="history-bar"><span class="fill" style="width:${fillPct}%; background:${color}"></span></span>
+          <span class="score-label">${scoreLabel}</span>
+        </div>
+      `;
+    }).join("");
+  }
+
+  async function fetchJSON(url, opts) {
+    const resp = await fetch(url, opts);
+    if (!resp.ok) {
+      const text = await resp.text();
+      throw new Error("HTTP " + resp.status + ": " + text);
+    }
+    return resp.json();
+  }
+
+  async function loadLatest() {
+    try {
+      const data = await fetchJSON("/api/audit/latest");
+      if (data.available) {
+        renderGauge(data.row.score);
+        renderHeadline(data.row);
+        renderSeverityBar(data.row);
+      } else {
+        renderGauge(null);
+        renderHeadline(null);
+        renderSeverityBar(null);
+      }
+    } catch (err) {
+      headline.textContent = "Could not load latest score";
+      console.error(err);
+    }
+  }
+
+  async function loadHistory() {
+    try {
+      const data = await fetchJSON("/api/audit/history?limit=5");
+      renderHistory(data.rows);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  function setStatus(text, kind) {
+    statusLine.textContent = text || "";
+    statusLine.className = kind || "";
+  }
+
+  function setButtonRunning() {
+    runBtn.disabled = true;
+    runBtnLabel.innerHTML = '<span class="spinner"></span>&nbsp;Running audit…';
+  }
+
+  function setButtonIdle() {
+    runBtn.disabled = false;
+    runBtnLabel.textContent = "Run Compliance Audit";
+  }
+
+  async function pollJob(jobId) {
+    const start = Date.now();
+    const TIMEOUT_MS = 120000;
+    while (Date.now() - start < TIMEOUT_MS) {
+      await new Promise(r => setTimeout(r, 1500));
+      try {
+        const data = await fetchJSON("/api/audit/status/" + encodeURIComponent(jobId));
+        if (data.status === "done") {
+          const score = (data.score === null || data.score === undefined) ? "N/A" : data.score + "/100";
+          setStatus("✓ Audit complete · " + score, "success");
+          setButtonIdle();
+          await loadLatest();
+          await loadHistory();
+          return;
+        }
+        if (data.status === "error") {
+          setStatus("✗ " + (data.error || "Unknown error"), "error");
+          setButtonIdle();
+          return;
+        }
+        // queued / running → keep polling
+        setStatus(data.status === "running" ? "Auditing pages…" : "Queued…");
+      } catch (err) {
+        setStatus("Status check failed: " + err.message, "error");
+        setButtonIdle();
+        return;
+      }
+    }
+    setStatus("Timed out waiting for audit.", "error");
+    setButtonIdle();
+  }
+
+  async function runAudit() {
+    setStatus("Triggering…");
+    setButtonRunning();
+    try {
+      const url = "/api/audit/trigger?key=" + encodeURIComponent(AUTH_KEY);
+      const data = await fetchJSON(url, { method: "POST" });
+      if (!data.job_id) {
+        setStatus("✗ No job id returned", "error");
+        setButtonIdle();
+        return;
+      }
+      setStatus("Queued · job " + data.job_id.slice(0, 8) + "…");
+      await pollJob(data.job_id);
+    } catch (err) {
+      setStatus("✗ " + err.message, "error");
+      setButtonIdle();
+    }
+  }
+
+  function init() {
+    if (!CAN_TRIGGER) {
+      runBtn.classList.add("readonly");
+      runBtnLabel.textContent = "Read-only · add ?key=… to enable";
+      runBtn.disabled = true;
+    } else {
+      runBtn.addEventListener("click", runAudit);
+    }
+    loadLatest();
+    loadHistory();
+  }
+
+  init();
+})();
+</script>
+</body>
+</html>

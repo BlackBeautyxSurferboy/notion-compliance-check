@@ -49,6 +49,9 @@ Issues = "https://github.com/BlackBeautyxSurferboy/notion-compliance-check/issue
 [tool.hatch.build.targets.wheel]
 packages = ["src/ncc"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"src/ncc/static" = "ncc/static"
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"
