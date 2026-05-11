@@ -30,6 +30,8 @@ services:
         sync: false
       - key: NCC_WEBHOOK_SECRET
         sync: false
+      - key: NCC_HISTORY_DB_ID
+        sync: false   # so audits triggered via webhook also append a history row
       - key: NCC_WEBHOOK_PORT
         value: "10000"  # Render's default web service port
       - key: NCC_STALE_THRESHOLD_DAYS
