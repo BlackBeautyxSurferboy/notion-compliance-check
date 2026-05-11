@@ -17,6 +17,7 @@ from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 
 from ncc.audit import run_audit
+from ncc.dashboard import write_audit_to_history
 from ncc.notion_client import NotionClient
 from ncc.report import write_report
 
@@ -51,7 +52,17 @@ async def _run_and_post(parent_page_id: str) -> None:
     token = _require_env("NOTION_TOKEN")
     async with NotionClient(token) as client:
         result = await run_audit(client)
-        await write_report(client, parent_page_id=parent_page_id, result=result)
+        page = await write_report(client, parent_page_id=parent_page_id, result=result)
+
+        # If a history DB is configured, append a row with this run's stats.
+        history_db = os.environ.get("NCC_HISTORY_DB_ID")
+        if history_db:
+            await write_audit_to_history(
+                client,
+                history_db_id=history_db,
+                result=result,
+                report_page_url=page.get("url"),
+            )
 
 
 @app.get("/health")

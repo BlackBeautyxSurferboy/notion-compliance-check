@@ -117,11 +117,28 @@ class NotionClient:
     async def create_page(self, body: dict[str, Any]) -> dict[str, Any]:
         return await self._request("POST", "/pages", json=body)
 
+    async def update_page(self, page_id: str, body: dict[str, Any]) -> dict[str, Any]:
+        return await self._request("PATCH", f"/pages/{page_id}", json=body)
+
     async def append_block_children(
         self, block_id: str, children: list[dict[str, Any]]
     ) -> dict[str, Any]:
         return await self._request(
             "PATCH", f"/blocks/{block_id}/children", json={"children": children}
+        )
+
+    async def create_database(self, body: dict[str, Any]) -> dict[str, Any]:
+        return await self._request("POST", "/databases", json=body)
+
+    async def archive_page(self, page_id: str) -> dict[str, Any]:
+        """Soft-delete a page (Notion's 'archive'). Reversible via the UI trash."""
+        return await self._request(
+            "PATCH", f"/pages/{page_id}", json={"archived": True}
+        )
+
+    async def archive_database(self, database_id: str) -> dict[str, Any]:
+        return await self._request(
+            "PATCH", f"/databases/{database_id}", json={"archived": True}
         )
 
 

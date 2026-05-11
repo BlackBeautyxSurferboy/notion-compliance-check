@@ -13,13 +13,27 @@ Compliance-Tools dafür gibt's — alle für Enterprise, alle teuer, alle für W
 
 ## Wie man's bedient
 
-Zwei Wege, ein Kern.
+Drei Wege, ein Kern.
 
 **1. Klick.** Notion-Button in einer Page → Audit läuft → Report-Page erscheint im Workspace. Funktioniert über Notions native `Send webhook`-Action — kein Zapier, kein Make, kein Middleware-Geraffel.
 
 **2. Konversationell.** NCC ist ein MCP-Server. Notion AI oder Claude können den Audit triggern, indem sie Tools wie `run_audit_and_post` oder `check_pii_exposure` aufrufen. Nutzt Notions strategische Plattform-Richtung — MCP statt klassische REST-Integration.
 
-Beides ruft denselben Audit-Orchestrator auf, dieselben Checks, denselben Report-Builder.
+**3. CLI für Power-User.** `ncc audit --post` aus dem Terminal — gleicher Output, gleiches Format, schneller für Power-User und automatisierbar (Cron, CI/CD).
+
+Alle drei rufen denselben Audit-Orchestrator auf, dieselben Checks, denselben Report-Builder.
+
+## Live-Dashboard direkt in Notion
+
+`ncc dashboard-setup` erzeugt eine **Notion-Page mit eingebetteter Audit-Historie-Datenbank**. Jeder Audit-Run schreibt automatisch eine Row rein: Score, Severity-Counts, Status, Link zur Report-Page, Dauer. Notion's native Chart-View visualisiert den Score-Trend über die Zeit — kein externes Tool, keine Grafana-Pipeline.
+
+Damit hat man auf einer Page:
+- Aktuellen Score-Stand
+- Trend der letzten N Runs
+- Direkte Links zu allen historischen Reports
+- Audit-Button oben drin
+
+Reproduzierbarkeit ist eingebaut: `ncc demo-setup` legt in 5 Sekunden einen Test-Workspace an (Sandbox-Page mit PII, Q3-Page mit sensitivem Titel, Risiko-Register-Database mit einem orphanedten Eintrag), `ncc demo-teardown` räumt wieder weg. Reviewer können also in 2 Minuten alles selbst durchspielen.
 
 ---
 

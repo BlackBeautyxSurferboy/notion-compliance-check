@@ -114,6 +114,27 @@ ncc audit --post           # also write the report into Notion
 ncc check pii_exposure     # run a single check
 ```
 
+### 3a. Optional: seed the workspace with demo content
+
+If you want audit-triggering content without copy-pasting Markdown into pages by hand:
+
+```bash
+ncc demo-setup             # creates [NCC Demo] sandbox page, sensitive-title page,
+                           # and a risk database with one orphan row
+ncc demo-teardown          # archives every [NCC Demo] artifact
+```
+
+### 3b. Optional: live dashboard + audit history
+
+```bash
+ncc dashboard-setup        # creates a Notion dashboard page + history database
+# Add the printed NCC_HISTORY_DB_ID to your .env
+# From now on, every `ncc audit --post` appends a row to the history DB
+```
+
+Once set up, the dashboard shows score over time as a Notion chart view — no
+external visualization layer.
+
 ### 4. Run as MCP server
 
 ```bash
@@ -177,6 +198,18 @@ See [docs/notion-button-setup.md](docs/notion-button-setup.md) for screenshots a
 | `check_orphaned_pages` | Single-check variant. |
 | `check_stale_data` | Single-check variant; takes a `threshold_days` arg. |
 | `check_pii_exposure` | Single-check variant. |
+
+### CLI commands
+
+| Command | Purpose |
+|---|---|
+| `ncc audit` | Run all checks, print findings to terminal. |
+| `ncc audit --post` | Plus create a report page in Notion. Writes a history row if `NCC_HISTORY_DB_ID` is set. |
+| `ncc audit --json` | JSON output for scripting. |
+| `ncc check <id>` | Run a single check. |
+| `ncc demo-setup` | Create demo content (sandbox, sensitive-title page, risk DB). |
+| `ncc demo-teardown` | Archive every `[NCC Demo]` artifact. |
+| `ncc dashboard-setup` | Create the compliance dashboard page and history database. |
 
 Resource: `ncc://about` — short capability summary, useful as system-prompt context.
 
